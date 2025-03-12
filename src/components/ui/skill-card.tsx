@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { ProgressCircle } from './progress-circle';
@@ -55,6 +54,7 @@ interface CourseCardProps {
   level: 'Beginner' | 'Intermediate' | 'Advanced';
   className?: string;
   onClick?: () => void;
+  style?: React.CSSProperties; // Add the style prop to fix the TypeScript error
 }
 
 export const CourseCard = ({
@@ -66,6 +66,7 @@ export const CourseCard = ({
   level,
   className,
   onClick,
+  style, // Add it to the destructured props
 }: CourseCardProps) => {
   const levelColor = {
     Beginner: 'bg-green-100 text-green-800',
@@ -81,6 +82,7 @@ export const CourseCard = ({
         className
       )}
       onClick={onClick}
+      style={style} // Use the style prop here
     >
       {image && (
         <div className="relative h-48 overflow-hidden">
