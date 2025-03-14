@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { CourseCard } from '@/components/ui/skill-card';
+import { useNavigate } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +26,8 @@ const coursesData = [
     category: 'Web Development',
     duration: '6 hours',
     level: 'Advanced' as const,
+    instructor: 'Sarah Johnson',
+    lessons: 12,
   },
   {
     id: '2',
@@ -34,6 +37,8 @@ const coursesData = [
     category: 'Programming',
     duration: '4 hours',
     level: 'Beginner' as const,
+    instructor: 'Michael Chen',
+    lessons: 8,
   },
   {
     id: '3',
@@ -43,6 +48,8 @@ const coursesData = [
     category: 'Design',
     duration: '8 hours',
     level: 'Intermediate' as const,
+    instructor: 'Emily Rodriguez',
+    lessons: 15,
   },
   {
     id: '4',
@@ -52,6 +59,8 @@ const coursesData = [
     category: 'Web Development',
     duration: '10 hours',
     level: 'Intermediate' as const,
+    instructor: 'David Kim',
+    lessons: 20,
   },
   {
     id: '5',
@@ -61,6 +70,8 @@ const coursesData = [
     category: 'Web Development',
     duration: '5 hours',
     level: 'Beginner' as const,
+    instructor: 'Jessica Patel',
+    lessons: 10,
   },
   {
     id: '6',
@@ -70,6 +81,8 @@ const coursesData = [
     category: 'Data Science',
     duration: '7 hours',
     level: 'Advanced' as const,
+    instructor: 'Alex Thompson',
+    lessons: 14,
   },
 ];
 
@@ -80,6 +93,7 @@ const Courses = () => {
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   const [selectedLevel, setSelectedLevel] = useState('All Levels');
   const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
   
   // Filter courses based on selected filters and search query
   const filteredCourses = coursesData.filter((course) => {
@@ -90,6 +104,10 @@ const Courses = () => {
     
     return matchesCategory && matchesLevel && matchesSearch;
   });
+  
+  const handleCourseClick = (courseId: string) => {
+    navigate(`/courses/${courseId}`);
+  };
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -177,6 +195,7 @@ const Courses = () => {
                   level={course.level}
                   className="animate-scale-up"
                   style={{ animationDelay: `${index * 50}ms` }}
+                  onClick={() => handleCourseClick(course.id)}
                 />
               ))}
             </div>
