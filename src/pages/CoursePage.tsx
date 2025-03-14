@@ -6,6 +6,9 @@ import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Clock, BookOpen, Users, Award } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
 
 // This would come from a database in a real application
 const coursesData = [
@@ -136,6 +139,10 @@ const CoursePage = () => {
   const navigate = useNavigate();
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [enrolling, setEnrolling] = useState(false);
+  const [isEnrolled, setIsEnrolled] = useState(false);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     // In a real app, this would be an API call
@@ -147,6 +154,79 @@ const CoursePage = () => {
     
     setLoading(false);
   }, [courseId]);
+
+  useEffect(() => {
+    const checkEnrollmentStatus = async () => {
+      if (!user || !courseId) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('enrollments')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('course_id', courseId)
+          .single();
+          
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error checking enrollment:', error);
+          return;
+        }
+        
+        setIsEnrolled(!!data);
+      } catch (error) {
+        console.error('Error checking enrollment status:', error);
+      }
+    };
+    
+    checkEnrollmentStatus();
+  }, [user, courseId]);
+
+  const handleEnroll = async () => {
+    if (!user) {
+      toast({
+        title: "Login required",
+        description: "Please sign in to enroll in courses",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (isEnrolled) {
+      toast({
+        title: "Already enrolled",
+        description: "You are already enrolled in this course",
+      });
+      return;
+    }
+    
+    setEnrolling(true);
+    
+    try {
+      const { error } = await supabase
+        .from('enrollments')
+        .insert({
+          user_id: user.id,
+          course_id: courseId
+        });
+        
+      if (error) throw error;
+      
+      setIsEnrolled(true);
+      toast({
+        title: "Enrollment successful",
+        description: "You have successfully enrolled in this course",
+      });
+    } catch (error: any) {
+      console.error('Error enrolling in course:', error);
+      toast({
+        title: "Enrollment failed",
+        description: error.message || "An error occurred while enrolling",
+        variant: "destructive"
+      });
+    } finally {
+      setEnrolling(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -289,7 +369,13 @@ const CoursePage = () => {
                     </div>
                   </div>
                   
-                  <Button className="w-full mt-4">Enroll Now</Button>
+                  <Button 
+                    className="w-full mt-4" 
+                    onClick={handleEnroll}
+                    disabled={enrolling || isEnrolled}
+                  >
+                    {isEnrolled ? 'Enrolled' : enrolling ? 'Enrolling...' : 'Enroll Now'}
+                  </Button>
                 </CardContent>
               </Card>
             </div>

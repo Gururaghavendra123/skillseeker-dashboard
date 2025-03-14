@@ -1,11 +1,14 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProgressCircle } from '@/components/ui/progress-circle';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
 import { 
   User, 
   Settings, 
@@ -13,10 +16,109 @@ import {
   FileText, 
   Award,
   Edit,
-  Calendar
+  Calendar,
+  Loader2
 } from 'lucide-react';
 
 const Profile = () => {
+  const { user, profile, updateProfile } = useAuth();
+  const [enrollments, setEnrollments] = useState<any[]>([]);
+  const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchUserEnrollments = async () => {
+      if (!user) return;
+      
+      try {
+        setLoading(true);
+        
+        // Fetch user's enrollments
+        const { data: enrollmentsData, error: enrollmentsError } = await supabase
+          .from('enrollments')
+          .select('*')
+          .eq('user_id', user.id);
+          
+        if (enrollmentsError) throw enrollmentsError;
+        
+        setEnrollments(enrollmentsData || []);
+        
+        // Get enrolled course details (in a real app, this would be from the database)
+        // This is a sample implementation using the mockup data
+        const mockCoursesData = [
+          {
+            id: '1',
+            title: 'Advanced React Patterns',
+            category: 'Web Development',
+            level: 'Advanced',
+          },
+          {
+            id: '2',
+            title: 'TypeScript Fundamentals',
+            category: 'Programming',
+            level: 'Beginner',
+          },
+          {
+            id: '3',
+            title: 'UI/UX Design Principles',
+            category: 'Design',
+            level: 'Intermediate',
+          },
+          {
+            id: '4',
+            title: 'Node.js Backend Development',
+            category: 'Web Development',
+            level: 'Intermediate',
+          },
+          {
+            id: '5',
+            title: 'CSS Grid and Flexbox Mastery',
+            category: 'Web Development',
+            level: 'Beginner',
+          },
+          {
+            id: '6',
+            title: 'Data Visualization with D3.js',
+            category: 'Data Science',
+            level: 'Advanced',
+          },
+        ];
+        
+        const courseIds = enrollmentsData?.map(enrollment => enrollment.course_id) || [];
+        const courses = mockCoursesData.filter(course => courseIds.includes(course.id));
+        
+        setEnrolledCourses(courses);
+      } catch (error: any) {
+        console.error('Error fetching enrollments:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load your enrollments',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchUserEnrollments();
+  }, [user, toast]);
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 pt-28 pb-20 flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold mb-4">Please sign in</h2>
+            <p className="text-muted-foreground mb-6">You need to be signed in to view your profile</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -37,21 +139,17 @@ const Profile = () => {
                 </div>
                 
                 <div className="flex-1">
-                  <h1 className="text-3xl font-bold mb-2">Alex Johnson</h1>
-                  <p className="text-muted-foreground mb-4">Frontend Developer | Learning UX Design</p>
+                  <h1 className="text-3xl font-bold mb-2">{profile?.username || user.email}</h1>
+                  <p className="text-muted-foreground mb-4">
+                    {user.email}
+                  </p>
                   
                   <div className="flex flex-wrap gap-2">
                     <div className="bg-secondary px-3 py-1 rounded-full text-xs">
-                      JavaScript
+                      Learning
                     </div>
                     <div className="bg-secondary px-3 py-1 rounded-full text-xs">
-                      React
-                    </div>
-                    <div className="bg-secondary px-3 py-1 rounded-full text-xs">
-                      TypeScript
-                    </div>
-                    <div className="bg-secondary px-3 py-1 rounded-full text-xs">
-                      UI Design
+                      Development
                     </div>
                   </div>
                 </div>
@@ -76,28 +174,28 @@ const Profile = () => {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <Card className="p-4">
                     <div className="flex flex-col items-center justify-center">
-                      <div className="text-2xl font-bold">12</div>
-                      <div className="text-sm text-muted-foreground">Courses Completed</div>
+                      <div className="text-2xl font-bold">{enrollments.length}</div>
+                      <div className="text-sm text-muted-foreground">Courses Enrolled</div>
                     </div>
                   </Card>
                   
                   <Card className="p-4">
                     <div className="flex flex-col items-center justify-center">
-                      <div className="text-2xl font-bold">3</div>
-                      <div className="text-sm text-muted-foreground">In Progress</div>
+                      <div className="text-2xl font-bold">0</div>
+                      <div className="text-sm text-muted-foreground">Completed</div>
                     </div>
                   </Card>
                   
                   <Card className="p-4">
                     <div className="flex flex-col items-center justify-center">
-                      <div className="text-2xl font-bold">85h</div>
+                      <div className="text-2xl font-bold">0h</div>
                       <div className="text-sm text-muted-foreground">Total Learning</div>
                     </div>
                   </Card>
                   
                   <Card className="p-4">
                     <div className="flex flex-col items-center justify-center">
-                      <div className="text-2xl font-bold">8</div>
+                      <div className="text-2xl font-bold">0</div>
                       <div className="text-sm text-muted-foreground">Certificates</div>
                     </div>
                   </Card>
@@ -115,35 +213,13 @@ const Profile = () => {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="font-medium">Master React and TypeScript</h4>
+                        <h4 className="font-medium">Complete your first course</h4>
                         <div className="flex items-center text-sm text-muted-foreground">
                           <Calendar className="h-4 w-4 mr-1" />
-                          Target: October 2023
+                          Set a target date
                         </div>
                       </div>
-                      <ProgressCircle progress={65} size={60} />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-medium">Learn UI/UX Design Fundamentals</h4>
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Calendar className="h-4 w-4 mr-1" />
-                          Target: December 2023
-                        </div>
-                      </div>
-                      <ProgressCircle progress={30} size={60} />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-medium">Build 5 Full-Stack Projects</h4>
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Calendar className="h-4 w-4 mr-1" />
-                          Target: January 2024
-                        </div>
-                      </div>
-                      <ProgressCircle progress={40} size={60} />
+                      <ProgressCircle progress={0} size={60} />
                     </div>
                   </div>
                 </Card>
@@ -152,53 +228,105 @@ const Profile = () => {
                 <Card className="p-6 space-y-4">
                   <h3 className="text-xl font-medium">Recent Activity</h3>
                   
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                      <div className="bg-primary/10 p-2 rounded-full">
-                        <FileText className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <h4 className="font-medium">Completed "Advanced React Hooks" lesson</h4>
-                        <p className="text-sm text-muted-foreground">2 days ago</p>
-                      </div>
+                  {loading ? (
+                    <div className="flex justify-center py-6">
+                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                     </div>
-                    
-                    <div className="flex items-start gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                      <div className="bg-primary/10 p-2 rounded-full">
-                        <Award className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <h4 className="font-medium">Earned "TypeScript Basics" certificate</h4>
-                        <p className="text-sm text-muted-foreground">1 week ago</p>
-                      </div>
+                  ) : enrollments.length > 0 ? (
+                    <div className="space-y-4">
+                      {enrollments.map((enrollment, index) => {
+                        const course = enrolledCourses.find(c => c.id === enrollment.course_id);
+                        if (!course) return null;
+                        
+                        return (
+                          <div key={index} className="flex items-start gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                            <div className="bg-primary/10 p-2 rounded-full">
+                              <Bookmark className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium">Enrolled in "{course.title}"</h4>
+                              <p className="text-sm text-muted-foreground">
+                                {new Date(enrollment.enrolled_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                    
-                    <div className="flex items-start gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                      <div className="bg-primary/10 p-2 rounded-full">
-                        <Bookmark className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <h4 className="font-medium">Saved "UI Design Principles" course</h4>
-                        <p className="text-sm text-muted-foreground">1 week ago</p>
-                      </div>
+                  ) : (
+                    <div className="text-center py-6 text-muted-foreground">
+                      <p>No recent activity. Start learning!</p>
                     </div>
-                  </div>
+                  )}
                 </Card>
               </TabsContent>
               
               <TabsContent value="courses" className="space-y-4">
                 <h3 className="text-xl font-medium mb-4">My Courses</h3>
-                <p className="text-muted-foreground">View all your enrolled and completed courses.</p>
+                
+                {loading ? (
+                  <div className="flex justify-center py-6">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  </div>
+                ) : enrolledCourses.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {enrolledCourses.map((course, index) => (
+                      <Card key={index} className="overflow-hidden">
+                        <div className="p-4">
+                          <h4 className="font-semibold mb-2">{course.title}</h4>
+                          <div className="flex gap-2 mb-4">
+                            <span className="text-xs px-2 py-1 rounded-full bg-secondary">
+                              {course.category}
+                            </span>
+                            <span className="text-xs px-2 py-1 rounded-full bg-secondary">
+                              {course.level}
+                            </span>
+                          </div>
+                          <Button size="sm" className="w-full">Continue Learning</Button>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-muted-foreground">
+                    <p>You haven't enrolled in any courses yet.</p>
+                    <Button className="mt-4" onClick={() => window.location.href = '/courses'}>
+                      Browse Courses
+                    </Button>
+                  </div>
+                )}
               </TabsContent>
               
               <TabsContent value="achievements" className="space-y-4">
                 <h3 className="text-xl font-medium mb-4">Achievements</h3>
-                <p className="text-muted-foreground">View your certificates and accomplishments.</p>
+                <div className="text-center py-6 text-muted-foreground">
+                  <p>Complete courses to earn certificates and achievements.</p>
+                </div>
               </TabsContent>
               
               <TabsContent value="settings" className="space-y-4">
                 <h3 className="text-xl font-medium mb-4">Account Settings</h3>
-                <p className="text-muted-foreground">Manage your account preferences and notifications.</p>
+                <Card className="p-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-medium mb-2">Username</h4>
+                      <div className="flex gap-2">
+                        <input 
+                          type="text" 
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          defaultValue={profile?.username || ''}
+                          placeholder="Username"
+                        />
+                        <Button>Save</Button>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-medium mb-2">Email</h4>
+                      <p className="text-muted-foreground">{user.email}</p>
+                    </div>
+                  </div>
+                </Card>
               </TabsContent>
             </Tabs>
           </div>
