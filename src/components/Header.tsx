@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -10,6 +10,9 @@ import {
 } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/contexts/AuthContext';
+import AuthModal from './auth/AuthModal';
+import UserAccountNav from './auth/UserAccountNav';
 
 const navItems = [
   { label: 'Dashboard', href: '/dashboard' },
@@ -22,6 +25,7 @@ export const Header = () => {
   const location = useLocation();
   const isMobile = useIsMobile();
   const [isScrolled, setIsScrolled] = useState(false);
+  const { user, isLoading } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -97,10 +101,22 @@ export const Header = () => {
           )}
 
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm" className="hidden md:inline-flex">
-              Sign In
-            </Button>
-            <Button size="sm">Get Started</Button>
+            {isLoading ? (
+              <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
+            ) : user ? (
+              <UserAccountNav />
+            ) : (
+              <>
+                <AuthModal 
+                  trigger={<Button variant="ghost" size="sm" className="hidden md:inline-flex">Sign In</Button>}
+                  defaultView="signin"
+                />
+                <AuthModal 
+                  trigger={<Button size="sm">Get Started</Button>}
+                  defaultView="signup"
+                />
+              </>
+            )}
           </div>
         </div>
       </div>
