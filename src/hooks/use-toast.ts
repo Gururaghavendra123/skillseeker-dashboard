@@ -2,5 +2,6 @@
 import { useToast as useToastOriginal } from "@/components/ui/use-toast";
 
 export const useToast = () => {
-  return useToastOriginal();
+  const toast = useToastOriginal();
+  return toast;
 };

@@ -111,7 +111,7 @@
 
 @layer components {
   .glass-card {
-    @apply bg-white/80 backdrop-blur-sm shadow-sm border border-white/20 rounded-lg;
+    @apply bg-white/80 backdrop-blur-sm shadow-sm border border-white/20 rounded-lg transition-all duration-300 hover:shadow-md;
   }
   
   .skill-progress-circle circle {
@@ -143,5 +143,20 @@
   /* Hero section gradient */
   .hero-gradient {
     @apply bg-gradient-to-b from-secondary to-background;
+  }
+  
+  /* Gradient card hover effect */
+  .gradient-card {
+    @apply bg-gradient-to-br from-card to-card/90 hover:from-card/95 hover:to-card/80 transition-all duration-300 border border-border/50;
+  }
+  
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent;
+  }
+  
+  /* Button gradient */
+  .gradient-button {
+    @apply bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-primary-foreground;
   }
 }
