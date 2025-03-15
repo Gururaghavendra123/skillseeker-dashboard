@@ -1,141 +1,78 @@
 
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { SkillRow, supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useNavigate } from 'react-router-dom';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useToast } from '@/hooks/use-toast';
+import React from 'react';
+import { SkillProgress } from './SkillProgress';
+import { CourseRecommendation } from './CourseRecommendation';
 
-// Helper function to group skills by category
-const groupSkillsByCategory = (skills: SkillRow[]) => {
-  const grouped: Record<string, { name: string, value: number, count: number }> = {};
-  
-  skills.forEach((skill) => {
-    if (!grouped[skill.category]) {
-      grouped[skill.category] = {
-        name: skill.category,
-        value: skill.progress,
-        count: 1
-      };
-    } else {
-      grouped[skill.category].value += skill.progress;
-      grouped[skill.category].count += 1;
-    }
-  });
-  
-  // Calculate average progress for each category
-  Object.keys(grouped).forEach((category) => {
-    grouped[category].value = Math.round(grouped[category].value / grouped[category].count);
-  });
-  
-  return Object.values(grouped);
-};
+// Mock data
+const skillsData = [
+  { id: '1', name: 'JavaScript', progress: 75, color: 'yellow-500' },
+  { id: '2', name: 'React', progress: 60, color: 'blue-500' },
+  { id: '3', name: 'UI Design', progress: 40, color: 'purple-500' },
+  { id: '4', name: 'Node.js', progress: 30, color: 'green-500' },
+  { id: '5', name: 'TypeScript', progress: 20, color: 'blue-400' },
+  { id: '6', name: 'CSS', progress: 65, color: 'pink-500' },
+];
 
-export function SkillDashboard() {
-  const [skills, setSkills] = useState<SkillRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  
-  useEffect(() => {
-    const fetchSkills = async () => {
-      if (!user) return;
-      
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('skills')
-          .select('*')
-          .eq('user_id', user.id);
-        
-        if (error) {
-          console.error('Error fetching skills:', error);
-          toast({
-            title: 'Error',
-            description: 'Failed to load skills data',
-            variant: 'destructive',
-          });
-          return;
-        }
-        
-        setSkills(data as SkillRow[]);
-      } catch (error) {
-        console.error('Error fetching skills:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load skills data',
-          variant: 'destructive',
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchSkills();
-  }, [user, toast]);
-  
-  const skillCategories = groupSkillsByCategory(skills);
-  
-  const navigateToSkills = () => {
-    navigate('/skills');
-  };
-  
+const coursesData = [
+  {
+    id: '1',
+    title: 'Advanced React Patterns',
+    description: 'Learn to implement advanced React patterns to build more maintainable components.',
+    image: 'https://images.unsplash.com/photo-1633356122102-3fe601e05bd2?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80',
+    category: 'Web Development',
+    duration: '6 hours',
+    level: 'Advanced' as const,
+  },
+  {
+    id: '2',
+    title: 'TypeScript Fundamentals',
+    description: 'Master the basics of TypeScript to improve your JavaScript development workflow.',
+    image: 'https://images.unsplash.com/photo-1587620962725-abab7fe55159?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80',
+    category: 'Programming',
+    duration: '4 hours',
+    level: 'Beginner' as const,
+  },
+  {
+    id: '3',
+    title: 'UI/UX Design Principles',
+    description: 'Learn the core principles of designing intuitive user interfaces and experiences.',
+    image: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80',
+    category: 'Design',
+    duration: '8 hours',
+    level: 'Intermediate' as const,
+  },
+];
+
+export const SkillDashboard = () => {
   return (
-    <Card className="bg-gradient-to-br from-card to-card/90">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">
-          Skill Progress
-        </CardTitle>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={navigateToSkills}
-          className="hover:bg-primary/10"
-        >
-          View All
-        </Button>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-[200px] w-full" />
+    <div className="space-y-12">
+      <section className="glass-card p-6">
+        <div className="space-y-2">
+          <h2 className="text-2xl font-semibold">Welcome back, Alex</h2>
+          <p className="text-muted-foreground">Your learning journey continues. Here's what's next for you.</p>
+        </div>
+        
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-secondary p-4 rounded-lg">
+            <div className="text-2xl font-medium">3</div>
+            <div className="text-sm text-muted-foreground">Courses in progress</div>
           </div>
-        ) : skills.length === 0 ? (
-          <div className="text-center py-6">
-            <p className="text-muted-foreground mb-4">You haven't added any skills yet</p>
-            <Button 
-              onClick={navigateToSkills}
-              className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary"
-            >
-              Add Skills
-            </Button>
+          
+          <div className="bg-secondary p-4 rounded-lg">
+            <div className="text-2xl font-medium">12</div>
+            <div className="text-sm text-muted-foreground">Hours this week</div>
           </div>
-        ) : (
-          <div className="h-[200px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={skillCategories}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis domain={[0, 100]} />
-                <Tooltip 
-                  formatter={(value) => [`${value}%`, 'Progress']}
-                  labelFormatter={(label) => `Category: ${label}`}
-                />
-                <Bar 
-                  dataKey="value" 
-                  fill="hsl(var(--primary))" 
-                  radius={[4, 4, 0, 0]}
-                  name="Progress"
-                />
-              </BarChart>
-            </ResponsiveContainer>
+          
+          <div className="bg-secondary p-4 rounded-lg">
+            <div className="text-2xl font-medium">6</div>
+            <div className="text-sm text-muted-foreground">Skills improving</div>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      </section>
+      
+      <SkillProgress skills={skillsData} />
+      
+      <CourseRecommendation courses={coursesData} />
+    </div>
   );
-}
+};

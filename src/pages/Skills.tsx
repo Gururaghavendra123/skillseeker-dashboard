@@ -1,243 +1,138 @@
 
-import React, { useState, useEffect } from 'react';
-import { SkillRow, supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { PlusIcon } from 'lucide-react';
+import React from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { useToast } from '@/hooks/use-toast';
-import { AddSkillDialog } from '@/components/skills/AddSkillDialog';
-import { EditSkillDialog } from '@/components/skills/EditSkillDialog';
-import { SkillTable } from '@/components/skills/SkillTable';
-import { EmptySkillState } from '@/components/skills/EmptySkillState';
-import { SkillLoader } from '@/components/skills/SkillLoader';
+import { SkillCard } from '@/components/ui/skill-card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Code, Book, BrainCircuit, Database, GraduationCap, Lightbulb } from 'lucide-react';
 
-export default function Skills() {
-  const [skills, setSkills] = useState<SkillRow[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [currentSkill, setCurrentSkill] = useState<SkillRow | null>(null);
-  const { user } = useAuth();
-  const { toast } = useToast();
+// Mock data
+const skillsData = [
+  {
+    id: '1',
+    title: 'JavaScript',
+    description: 'Modern JavaScript concepts including ES6+, async/await, and functional programming.',
+    progress: 75,
+    icon: <Code className="h-6 w-6" />,
+    category: 'Programming'
+  },
+  {
+    id: '2',
+    title: 'React',
+    description: 'Component-based architecture, hooks, state management, and React ecosystem.',
+    progress: 60,
+    icon: <Code className="h-6 w-6" />,
+    category: 'Programming'
+  },
+  {
+    id: '3',
+    title: 'UI Design',
+    description: 'Creating intuitive interfaces with design thinking and user experience principles.',
+    progress: 40,
+    icon: <Lightbulb className="h-6 w-6" />,
+    category: 'Design'
+  },
+  {
+    id: '4',
+    title: 'Node.js',
+    description: 'Server-side JavaScript, API development, and backend architecture.',
+    progress: 30,
+    icon: <Database className="h-6 w-6" />,
+    category: 'Backend'
+  },
+  {
+    id: '5',
+    title: 'TypeScript',
+    description: 'Static typing, interfaces, and type-safe development for JavaScript.',
+    progress: 20,
+    icon: <Code className="h-6 w-6" />,
+    category: 'Programming'
+  },
+  {
+    id: '6',
+    title: 'CSS & Tailwind',
+    description: 'Modern CSS techniques, responsive design, and utility-first frameworks.',
+    progress: 65,
+    icon: <Book className="h-6 w-6" />,
+    category: 'Design'
+  },
+  {
+    id: '7',
+    title: 'Data Structures',
+    description: 'Understanding core data structures and their applications in software development.',
+    progress: 45,
+    icon: <BrainCircuit className="h-6 w-6" />,
+    category: 'Computer Science'
+  },
+  {
+    id: '8',
+    title: 'Machine Learning',
+    description: 'Basics of machine learning algorithms and data analysis techniques.',
+    progress: 15,
+    icon: <BrainCircuit className="h-6 w-6" />,
+    category: 'Computer Science'
+  },
+  {
+    id: '9',
+    title: 'Soft Skills',
+    description: 'Communication, teamwork, and project management for tech professionals.',
+    progress: 80,
+    icon: <GraduationCap className="h-6 w-6" />,
+    category: 'Professional'
+  },
+];
 
-  const fetchSkills = async () => {
-    if (!user) return;
-    
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('skills')
-        .select('*')
-        .eq('user_id', user.id);
-      
-      if (error) {
-        console.error('Error fetching skills:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load your skills',
-          variant: 'destructive',
-        });
-        return;
-      }
-      
-      // Extract unique categories
-      const uniqueCategories = Array.from(
-        new Set((data as SkillRow[]).map(skill => skill.category))
-      );
-      
-      setSkills(data as SkillRow[]);
-      setCategories(uniqueCategories);
-    } catch (error) {
-      console.error('Error fetching skills:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load your skills',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+const categories = ['All Skills', 'Programming', 'Design', 'Backend', 'Computer Science', 'Professional'];
 
-  useEffect(() => {
-    fetchSkills();
-  }, [user]);
-
-  const handleAddSkill = async (formData: Omit<SkillRow, 'id' | 'created_at' | 'updated_at' | 'user_id'>) => {
-    if (!user) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('skills')
-        .insert({
-          user_id: user.id,
-          title: formData.title,
-          description: formData.description,
-          progress: formData.progress,
-          category: formData.category,
-        })
-        .select();
-      
-      if (error) {
-        console.error('Error adding skill:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to add your skill',
-          variant: 'destructive',
-        });
-        return;
-      }
-      
-      toast({
-        title: 'Success',
-        description: 'Skill added successfully',
-      });
-      
-      fetchSkills();
-    } catch (error) {
-      console.error('Error adding skill:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to add your skill',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleUpdateSkill = async (formData: Partial<SkillRow>) => {
-    if (!currentSkill) return;
-    
-    try {
-      const { error } = await supabase
-        .from('skills')
-        .update({
-          title: formData.title,
-          description: formData.description,
-          progress: formData.progress,
-          category: formData.category,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', currentSkill.id);
-      
-      if (error) {
-        console.error('Error updating skill:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to update your skill',
-          variant: 'destructive',
-        });
-        return;
-      }
-      
-      toast({
-        title: 'Success',
-        description: 'Skill updated successfully',
-      });
-      
-      fetchSkills();
-    } catch (error) {
-      console.error('Error updating skill:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update your skill',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleDeleteSkill = async (skillId: string) => {
-    try {
-      const { error } = await supabase
-        .from('skills')
-        .delete()
-        .eq('id', skillId);
-      
-      if (error) {
-        console.error('Error deleting skill:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to delete your skill',
-          variant: 'destructive',
-        });
-        return;
-      }
-      
-      toast({
-        title: 'Success',
-        description: 'Skill deleted successfully',
-      });
-      
-      fetchSkills();
-    } catch (error) {
-      console.error('Error deleting skill:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to delete your skill',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const openEditDialog = (skill: SkillRow) => {
-    setCurrentSkill(skill);
-    setEditDialogOpen(true);
-  };
-
+const Skills = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-secondary/20">
+    <div className="min-h-screen flex flex-col">
       <Header />
       
       <main className="flex-1 pt-28 pb-20">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold">Your Skills</h1>
-            <Button 
-              onClick={() => setAddDialogOpen(true)}
-              className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary"
-            >
-              <PlusIcon className="mr-2 h-4 w-4" />
-              Add Skill
-            </Button>
+          <div className="mb-10">
+            <h1 className="text-3xl font-bold mb-2 animate-fade-up">Your Skills</h1>
+            <p className="text-muted-foreground animate-fade-up animation-delay-100">
+              Track your progress and identify areas for improvement
+            </p>
           </div>
           
-          {loading ? (
-            <SkillLoader />
-          ) : skills.length === 0 ? (
-            <EmptySkillState onAddClick={() => setAddDialogOpen(true)} />
-          ) : (
-            <div className="space-y-6">
-              <SkillTable 
-                skills={skills}
-                onEdit={openEditDialog}
-                onDelete={handleDeleteSkill}
-              />
-            </div>
-          )}
-          
-          <AddSkillDialog
-            open={addDialogOpen}
-            onOpenChange={setAddDialogOpen}
-            onAddSkill={handleAddSkill}
-            existingCategories={categories}
-          />
-          
-          {currentSkill && (
-            <EditSkillDialog
-              open={editDialogOpen}
-              onOpenChange={setEditDialogOpen}
-              onUpdateSkill={handleUpdateSkill}
-              onDeleteSkill={handleDeleteSkill}
-              skill={currentSkill}
-              existingCategories={categories}
-            />
-          )}
+          <Tabs defaultValue="All Skills" className="w-full animate-fade-up animation-delay-200">
+            <TabsList className="mb-8 w-full max-w-3xl mx-auto flex justify-between overflow-x-auto">
+              {categories.map(category => (
+                <TabsTrigger key={category} value={category} className="px-4">
+                  {category}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            
+            {categories.map(category => (
+              <TabsContent key={category} value={category} className="mt-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {skillsData
+                    .filter(skill => category === 'All Skills' || skill.category === category)
+                    .map((skill, index) => (
+                      <SkillCard
+                        key={skill.id}
+                        title={skill.title}
+                        description={skill.description}
+                        progress={skill.progress}
+                        icon={skill.icon}
+                        className="animate-scale-up"
+                        style={{ animationDelay: `${index * 50}ms` }}
+                      />
+                    ))}
+                </div>
+              </TabsContent>
+            ))}
+          </Tabs>
         </div>
       </main>
       
       <Footer />
     </div>
   );
-}
+};
+
+export default Skills;
