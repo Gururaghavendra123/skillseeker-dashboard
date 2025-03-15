@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 type OnboardingContextType = {
   isOnboarded: boolean;
   completeOnboarding: () => void;
+  showOnboarding: () => void;
 };
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
@@ -19,19 +20,32 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (user && profile) {
       // Check if the user has completed onboarding
       const onboardingComplete = !!profile.username;
-      setIsOnboarded(onboardingComplete);
-      setShowSetup(!onboardingComplete);
+      const storedOnboarding = localStorage.getItem(`onboarded-${user.id}`);
+      
+      if (onboardingComplete || storedOnboarding === 'true') {
+        setIsOnboarded(true);
+        setShowSetup(false);
+      } else {
+        setIsOnboarded(false);
+        setShowSetup(true);
+      }
     }
   }, [user, profile]);
 
   const completeOnboarding = () => {
-    setIsOnboarded(true);
-    setShowSetup(false);
-    localStorage.setItem(`onboarded-${user?.id}`, 'true');
+    if (user) {
+      setIsOnboarded(true);
+      setShowSetup(false);
+      localStorage.setItem(`onboarded-${user.id}`, 'true');
+    }
+  };
+  
+  const showOnboarding = () => {
+    setShowSetup(true);
   };
 
   return (
-    <OnboardingContext.Provider value={{ isOnboarded, completeOnboarding }}>
+    <OnboardingContext.Provider value={{ isOnboarded, completeOnboarding, showOnboarding }}>
       {children}
       {showSetup && <ProfileSetup onComplete={completeOnboarding} />}
     </OnboardingContext.Provider>

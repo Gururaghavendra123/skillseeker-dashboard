@@ -9,6 +9,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Trash2 } from 'lucide-react';
+import { SkillRow } from '@/integrations/supabase/client';
 import {
   Form,
   FormControl,
@@ -37,7 +38,6 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const formSchema = z.object({
-  id: z.string(),
   title: z.string().min(2, { message: 'Skill name must be at least 2 characters' }),
   description: z.string().min(10, { message: 'Description must be at least 10 characters' }),
   category: z.string().min(1, { message: 'Please select a category' }),
@@ -49,24 +49,23 @@ type FormValues = z.infer<typeof formSchema>;
 interface EditSkillDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  skill: any;
-  onEditSkill: (skill: FormValues) => void;
+  skill: SkillRow;
+  onUpdateSkill: (formData: Partial<SkillRow>) => Promise<void>;
   onDeleteSkill: (id: string) => void;
-  categories: string[];
+  existingCategories: string[];
 }
 
 export const EditSkillDialog: React.FC<EditSkillDialogProps> = ({
   open,
   onOpenChange,
   skill,
-  onEditSkill,
+  onUpdateSkill,
   onDeleteSkill,
-  categories,
+  existingCategories,
 }) => {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      id: skill?.id || '',
       title: skill?.title || '',
       description: skill?.description || '',
       category: skill?.category || '',
@@ -78,7 +77,8 @@ export const EditSkillDialog: React.FC<EditSkillDialogProps> = ({
   const isSubmitting = formState.isSubmitting;
 
   const onSubmit = async (data: FormValues) => {
-    onEditSkill(data);
+    await onUpdateSkill(data);
+    onOpenChange(false);
   };
 
   const handleDelete = () => {
@@ -122,11 +122,23 @@ export const EditSkillDialog: React.FC<EditSkillDialogProps> = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {categories.map((category) => (
+                      {existingCategories.map((category) => (
                         <SelectItem key={category} value={category}>
                           {category}
                         </SelectItem>
                       ))}
+                      {!existingCategories.includes('Programming') && (
+                        <SelectItem value="Programming">Programming</SelectItem>
+                      )}
+                      {!existingCategories.includes('Design') && (
+                        <SelectItem value="Design">Design</SelectItem>
+                      )}
+                      {!existingCategories.includes('Data Science') && (
+                        <SelectItem value="Data Science">Data Science</SelectItem>
+                      )}
+                      {!existingCategories.includes('Business') && (
+                        <SelectItem value="Business">Business</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -206,7 +218,7 @@ export const EditSkillDialog: React.FC<EditSkillDialogProps> = ({
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isSubmitting}>
+                <Button type="submit" disabled={isSubmitting} className="bg-gradient-to-r from-primary to-primary/80">
                   {isSubmitting ? 'Saving...' : 'Save Changes'}
                 </Button>
               </div>

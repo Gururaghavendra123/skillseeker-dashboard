@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useToast } from '@/hooks/use-toast';
 
 // Helper function to group skills by category
 const groupSkillsByCategory = (skills: SkillRow[]) => {
@@ -38,12 +39,14 @@ export function SkillDashboard() {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   useEffect(() => {
     const fetchSkills = async () => {
       if (!user) return;
       
       try {
+        setLoading(true);
         const { data, error } = await supabase
           .from('skills')
           .select('*')
@@ -51,19 +54,29 @@ export function SkillDashboard() {
         
         if (error) {
           console.error('Error fetching skills:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to load skills data',
+            variant: 'destructive',
+          });
           return;
         }
         
         setSkills(data as SkillRow[]);
       } catch (error) {
         console.error('Error fetching skills:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load skills data',
+          variant: 'destructive',
+        });
       } finally {
         setLoading(false);
       }
     };
     
     fetchSkills();
-  }, [user]);
+  }, [user, toast]);
   
   const skillCategories = groupSkillsByCategory(skills);
   
@@ -72,12 +85,17 @@ export function SkillDashboard() {
   };
   
   return (
-    <Card>
+    <Card className="bg-gradient-to-br from-card to-card/90">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">
           Skill Progress
         </CardTitle>
-        <Button variant="outline" size="sm" onClick={navigateToSkills}>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={navigateToSkills}
+          className="hover:bg-primary/10"
+        >
           View All
         </Button>
       </CardHeader>
@@ -89,7 +107,12 @@ export function SkillDashboard() {
         ) : skills.length === 0 ? (
           <div className="text-center py-6">
             <p className="text-muted-foreground mb-4">You haven't added any skills yet</p>
-            <Button onClick={navigateToSkills}>Add Skills</Button>
+            <Button 
+              onClick={navigateToSkills}
+              className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary"
+            >
+              Add Skills
+            </Button>
           </div>
         ) : (
           <div className="h-[200px]">

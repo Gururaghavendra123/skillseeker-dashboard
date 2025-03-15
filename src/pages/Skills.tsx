@@ -3,15 +3,15 @@ import React, { useState, useEffect } from 'react';
 import { SkillRow, supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { PlusIcon, PencilIcon, TrashIcon } from 'lucide-react';
+import { PlusIcon } from 'lucide-react';
+import { Header } from '@/components/Header';
+import { Footer } from '@/components/Footer';
+import { useToast } from '@/hooks/use-toast';
 import { AddSkillDialog } from '@/components/skills/AddSkillDialog';
 import { EditSkillDialog } from '@/components/skills/EditSkillDialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useToast } from '@/hooks/use-toast';
-import { Skeleton } from '@/components/ui/skeleton';
+import { SkillTable } from '@/components/skills/SkillTable';
+import { EmptySkillState } from '@/components/skills/EmptySkillState';
+import { SkillLoader } from '@/components/skills/SkillLoader';
 
 export default function Skills() {
   const [skills, setSkills] = useState<SkillRow[]>([]);
@@ -52,6 +52,11 @@ export default function Skills() {
       setCategories(uniqueCategories);
     } catch (error) {
       console.error('Error fetching skills:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load your skills',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
@@ -61,7 +66,7 @@ export default function Skills() {
     fetchSkills();
   }, [user]);
 
-  const handleAddSkill = async (formData: Omit<SkillRow, 'id' | 'created_at' | 'updated_at'>) => {
+  const handleAddSkill = async (formData: Omit<SkillRow, 'id' | 'created_at' | 'updated_at' | 'user_id'>) => {
     if (!user) return;
     
     try {
@@ -94,10 +99,17 @@ export default function Skills() {
       fetchSkills();
     } catch (error) {
       console.error('Error adding skill:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to add your skill',
+        variant: 'destructive',
+      });
     }
   };
 
-  const handleEditSkill = async (skillId: string, formData: Partial<SkillRow>) => {
+  const handleUpdateSkill = async (formData: Partial<SkillRow>) => {
+    if (!currentSkill) return;
+    
     try {
       const { error } = await supabase
         .from('skills')
@@ -108,7 +120,7 @@ export default function Skills() {
           category: formData.category,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', skillId);
+        .eq('id', currentSkill.id);
       
       if (error) {
         console.error('Error updating skill:', error);
@@ -128,6 +140,11 @@ export default function Skills() {
       fetchSkills();
     } catch (error) {
       console.error('Error updating skill:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update your skill',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -156,6 +173,11 @@ export default function Skills() {
       fetchSkills();
     } catch (error) {
       console.error('Error deleting skill:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete your skill',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -165,118 +187,57 @@ export default function Skills() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Your Skills</h1>
-        <Button 
-          onClick={() => setAddDialogOpen(true)}
-          className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary"
-        >
-          <PlusIcon className="mr-2 h-4 w-4" />
-          Add Skill
-        </Button>
-      </div>
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-secondary/20">
+      <Header />
       
-      {loading ? (
-        <div className="space-y-3">
-          {[...Array(3)].map((_, index) => (
-            <Card key={index}>
-              <CardHeader>
-                <Skeleton className="h-6 w-1/3" />
-                <Skeleton className="h-4 w-1/2" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-4 w-full mb-4" />
-                <Skeleton className="h-4 w-11/12" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : skills.length === 0 ? (
-        <Card className="text-center py-8">
-          <CardHeader>
-            <CardTitle>No Skills Found</CardTitle>
-            <CardDescription>
-              Start by adding your first skill to track your progress
-            </CardDescription>
-          </CardHeader>
-          <CardFooter className="justify-center">
-            <Button onClick={() => setAddDialogOpen(true)}>
+      <main className="flex-1 pt-28 pb-20">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold">Your Skills</h1>
+            <Button 
+              onClick={() => setAddDialogOpen(true)}
+              className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary"
+            >
               <PlusIcon className="mr-2 h-4 w-4" />
-              Add Your First Skill
+              Add Skill
             </Button>
-          </CardFooter>
-        </Card>
-      ) : (
-        <div className="space-y-6">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Progress</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {skills.map((skill) => (
-                <TableRow key={skill.id}>
-                  <TableCell className="font-medium">{skill.title}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="bg-secondary/30">
-                      {skill.category}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Progress value={skill.progress} className="h-2 w-24" />
-                      <span className="text-xs text-muted-foreground w-8">{skill.progress}%</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => openEditDialog(skill)}
-                        title="Edit Skill"
-                      >
-                        <PencilIcon className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteSkill(skill.id)}
-                        title="Delete Skill"
-                        className="text-destructive"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          </div>
+          
+          {loading ? (
+            <SkillLoader />
+          ) : skills.length === 0 ? (
+            <EmptySkillState onAddClick={() => setAddDialogOpen(true)} />
+          ) : (
+            <div className="space-y-6">
+              <SkillTable 
+                skills={skills}
+                onEdit={openEditDialog}
+                onDelete={handleDeleteSkill}
+              />
+            </div>
+          )}
+          
+          <AddSkillDialog
+            open={addDialogOpen}
+            onOpenChange={setAddDialogOpen}
+            onAddSkill={handleAddSkill}
+            existingCategories={categories}
+          />
+          
+          {currentSkill && (
+            <EditSkillDialog
+              open={editDialogOpen}
+              onOpenChange={setEditDialogOpen}
+              onUpdateSkill={handleUpdateSkill}
+              onDeleteSkill={handleDeleteSkill}
+              skill={currentSkill}
+              existingCategories={categories}
+            />
+          )}
         </div>
-      )}
+      </main>
       
-      <AddSkillDialog
-        open={addDialogOpen}
-        onOpenChange={setAddDialogOpen}
-        onAddSkill={handleAddSkill}
-        existingCategories={categories}
-      />
-      
-      {currentSkill && (
-        <EditSkillDialog
-          open={editDialogOpen}
-          onOpenChange={setEditDialogOpen}
-          onUpdateSkill={(formData) => handleEditSkill(currentSkill.id, formData)}
-          skill={currentSkill}
-          existingCategories={categories}
-        />
-      )}
+      <Footer />
     </div>
   );
 }

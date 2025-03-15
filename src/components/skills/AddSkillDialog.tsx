@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { SkillRow } from '@/integrations/supabase/client';
 
 const formSchema = z.object({
   title: z.string().min(2, { message: 'Skill name must be at least 2 characters' }),
@@ -36,15 +37,15 @@ type FormValues = z.infer<typeof formSchema>;
 interface AddSkillDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddSkill: (skill: FormValues) => void;
-  categories: string[];
+  onAddSkill: (skill: Omit<SkillRow, 'id' | 'created_at' | 'updated_at' | 'user_id'>) => void;
+  existingCategories: string[];
 }
 
 export const AddSkillDialog: React.FC<AddSkillDialogProps> = ({
   open,
   onOpenChange,
   onAddSkill,
-  categories,
+  existingCategories,
 }) => {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -101,11 +102,27 @@ export const AddSkillDialog: React.FC<AddSkillDialogProps> = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
+                      {existingCategories.length > 0 ? (
+                        existingCategories.map((category) => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="General">General</SelectItem>
+                      )}
+                      {!existingCategories.includes('Programming') && (
+                        <SelectItem value="Programming">Programming</SelectItem>
+                      )}
+                      {!existingCategories.includes('Design') && (
+                        <SelectItem value="Design">Design</SelectItem>
+                      )}
+                      {!existingCategories.includes('Data Science') && (
+                        <SelectItem value="Data Science">Data Science</SelectItem>
+                      )}
+                      {!existingCategories.includes('Business') && (
+                        <SelectItem value="Business">Business</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -162,7 +179,7 @@ export const AddSkillDialog: React.FC<AddSkillDialogProps> = ({
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} className="bg-gradient-to-r from-primary to-primary/80">
                 {isSubmitting ? 'Adding...' : 'Add Skill'}
               </Button>
             </DialogFooter>
