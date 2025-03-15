@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -6,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Code, Book, BrainCircuit, Database, GraduationCap, Lightbulb, Edit } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, SkillRow } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { AddSkillDialog } from '@/components/skills/AddSkillDialog';
 import { EditSkillDialog } from '@/components/skills/EditSkillDialog';
@@ -31,7 +32,7 @@ const Skills = () => {
         const { data, error } = await supabase
           .from('skills')
           .select('*')
-          .eq('user_id', user.id) as { data: SkillRow[] | null, error: any };
+          .eq('user_id', user.id);
           
         if (error) throw error;
         
@@ -55,7 +56,7 @@ const Skills = () => {
                 .insert({
                   ...skillData,
                   user_id: user.id
-                }) as { data: any, error: any };
+                });
             }
           }
         }
@@ -138,12 +139,12 @@ const Skills = () => {
       const { data, error } = await supabase
         .from('skills')
         .insert(skillWithUserId)
-        .select() as { data: SkillRow[] | null, error: any };
+        .select();
         
       if (error) throw error;
       
       const addedSkill = {
-        ...data![0],
+        ...data[0],
         icon: getIconForCategory(newSkill.category)
       };
       
@@ -173,7 +174,7 @@ const Skills = () => {
         .from('skills')
         .update(skillData)
         .eq('id', id)
-        .eq('user_id', user.id) as { data: any, error: any };
+        .eq('user_id', user.id);
         
       if (error) throw error;
       
@@ -209,7 +210,7 @@ const Skills = () => {
         .from('skills')
         .delete()
         .eq('id', id)
-        .eq('user_id', user.id) as { data: any, error: any };
+        .eq('user_id', user.id);
         
       if (error) throw error;
       

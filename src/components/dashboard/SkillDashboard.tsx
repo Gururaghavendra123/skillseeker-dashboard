@@ -5,7 +5,7 @@ import { CourseRecommendation } from './CourseRecommendation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, SkillRow } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2, ArrowUpRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -56,11 +56,11 @@ export const SkillDashboard = () => {
       try {
         setLoading(true);
         
-        // Fetch skills - using any type for now since the database types aren't updated yet
+        // Fetch skills
         const { data: skillsData, error: skillsError } = await supabase
           .from('skills')
           .select('*')
-          .eq('user_id', user.id) as { data: SkillRow[] | null, error: any };
+          .eq('user_id', user.id);
           
         if (skillsError) throw skillsError;
         
