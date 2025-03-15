@@ -6,7 +6,7 @@ import { SkillDashboard } from '@/components/dashboard/SkillDashboard';
 
 const Dashboard = () => {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-secondary/20">
       <Header />
       
       <main className="flex-1 pt-28 pb-20">

@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Search } from 'lucide-react';
+import { ChevronDown, Search, GraduationCap } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 // Mock data
@@ -110,7 +110,7 @@ const Courses = () => {
   };
   
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-secondary/20">
       <Header />
       
       <main className="flex-1 pt-28 pb-20">
@@ -193,16 +193,24 @@ const Courses = () => {
                   category={course.category}
                   duration={course.duration}
                   level={course.level}
-                  className="animate-scale-up"
+                  className="animate-scale-up hover:shadow-md transition-shadow"
                   style={{ animationDelay: `${index * 50}ms` }}
                   onClick={() => handleCourseClick(course.id)}
                 />
               ))}
             </div>
           ) : (
-            <div className="text-center py-20">
+            <div className="text-center py-20 bg-gradient-to-r from-background to-secondary/20 rounded-lg">
+              <GraduationCap className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-xl font-medium mb-2">No courses found</h3>
-              <p className="text-muted-foreground">Try adjusting your filters or search query</p>
+              <p className="text-muted-foreground mb-6">Try adjusting your filters or search query</p>
+              <Button onClick={() => {
+                setSearchQuery('');
+                setSelectedCategory('All Categories');
+                setSelectedLevel('All Levels');
+              }}>
+                Reset Filters
+              </Button>
             </div>
           )}
         </div>

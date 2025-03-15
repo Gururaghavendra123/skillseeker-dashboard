@@ -5,10 +5,21 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Clock, BookOpen, Users, Award } from 'lucide-react';
+import { ArrowLeft, Clock, BookOpen, Users, Award, Check, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 // This would come from a database in a real application
 const coursesData = [
@@ -140,6 +151,7 @@ const CoursePage = () => {
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
+  const [unenrolling, setUnenrolling] = useState(false);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -228,12 +240,44 @@ const CoursePage = () => {
     }
   };
 
+  const handleUnenroll = async () => {
+    if (!user || !courseId) return;
+    
+    setUnenrolling(true);
+    
+    try {
+      const { error } = await supabase
+        .from('enrollments')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('course_id', courseId);
+        
+      if (error) throw error;
+      
+      setIsEnrolled(false);
+      toast({
+        title: "Unenrolled successfully",
+        description: "You have been unenrolled from this course",
+      });
+    } catch (error: any) {
+      console.error('Error unenrolling from course:', error);
+      toast({
+        title: "Unenrollment failed",
+        description: error.message || "An error occurred while unenrolling",
+        variant: "destructive"
+      });
+    } finally {
+      setUnenrolling(false);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-secondary/20">
         <Header />
         <main className="flex-1 pt-28 pb-20 flex items-center justify-center">
           <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
             <p className="text-lg">Loading course information...</p>
           </div>
         </main>
@@ -244,13 +288,13 @@ const CoursePage = () => {
 
   if (!course) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-secondary/20">
         <Header />
         <main className="flex-1 pt-28 pb-20 flex items-center justify-center">
           <div className="text-center">
             <h2 className="text-2xl font-semibold mb-2">Course Not Found</h2>
             <p className="text-muted-foreground mb-6">The course you're looking for doesn't exist or has been removed.</p>
-            <Button onClick={() => navigate('/courses')}>Back to Courses</Button>
+            <Button onClick={() => navigate('/courses')} className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary">Back to Courses</Button>
           </div>
         </main>
         <Footer />
@@ -277,7 +321,7 @@ const CoursePage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-secondary/20">
       <Header />
       
       <main className="flex-1 pt-28 pb-20">
@@ -302,17 +346,17 @@ const CoursePage = () => {
                     {level}
                   </span>
                 </div>
-                <h1 className="text-3xl font-bold mb-4">{title}</h1>
+                <h1 className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">{title}</h1>
                 <p className="text-muted-foreground">{description}</p>
               </div>
               
               <div className="animate-fade-up animation-delay-100">
                 <h2 className="text-xl font-semibold mb-4">Course Content</h2>
-                <div className="border rounded-md divide-y">
+                <div className="border rounded-md divide-y overflow-hidden bg-card">
                   {syllabus.map((item, index) => (
-                    <div key={index} className="p-4 flex justify-between items-center">
+                    <div key={index} className="p-4 flex justify-between items-center hover:bg-muted/50 transition-colors">
                       <div className="flex items-start">
-                        <span className="mr-3 text-sm font-medium">{index + 1}</span>
+                        <span className="mr-3 text-sm font-medium bg-primary/10 size-6 flex items-center justify-center rounded-full text-primary">{index + 1}</span>
                         <span>{item.title}</span>
                       </div>
                       <span className="text-sm text-muted-foreground">{item.duration}</span>
@@ -323,7 +367,7 @@ const CoursePage = () => {
             </div>
             
             <div className="space-y-6">
-              <div className="rounded-lg overflow-hidden animate-fade-up">
+              <div className="rounded-lg overflow-hidden animate-fade-up shadow-md">
                 <img 
                   src={image} 
                   alt={title} 
@@ -331,14 +375,14 @@ const CoursePage = () => {
                 />
               </div>
               
-              <Card className="animate-fade-up animation-delay-100">
+              <Card className="animate-fade-up animation-delay-100 overflow-hidden bg-gradient-to-b from-card to-card/80">
                 <CardHeader>
                   <CardTitle>Course Information</CardTitle>
                   <CardDescription>Details about this course</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <Clock className="h-5 w-5 text-muted-foreground" />
+                    <Clock className="h-5 w-5 text-primary" />
                     <div>
                       <p className="font-medium">Duration</p>
                       <p className="text-sm text-muted-foreground">{duration}</p>
@@ -346,7 +390,7 @@ const CoursePage = () => {
                   </div>
                   
                   <div className="flex items-center gap-3">
-                    <BookOpen className="h-5 w-5 text-muted-foreground" />
+                    <BookOpen className="h-5 w-5 text-primary" />
                     <div>
                       <p className="font-medium">Lessons</p>
                       <p className="text-sm text-muted-foreground">{lessons} lessons</p>
@@ -354,7 +398,7 @@ const CoursePage = () => {
                   </div>
                   
                   <div className="flex items-center gap-3">
-                    <Users className="h-5 w-5 text-muted-foreground" />
+                    <Users className="h-5 w-5 text-primary" />
                     <div>
                       <p className="font-medium">Instructor</p>
                       <p className="text-sm text-muted-foreground">{instructor}</p>
@@ -362,20 +406,57 @@ const CoursePage = () => {
                   </div>
                   
                   <div className="flex items-center gap-3">
-                    <Award className="h-5 w-5 text-muted-foreground" />
+                    <Award className="h-5 w-5 text-primary" />
                     <div>
                       <p className="font-medium">Level</p>
                       <p className="text-sm text-muted-foreground">{level}</p>
                     </div>
                   </div>
                   
-                  <Button 
-                    className="w-full mt-4" 
-                    onClick={handleEnroll}
-                    disabled={enrolling || isEnrolled}
-                  >
-                    {isEnrolled ? 'Enrolled' : enrolling ? 'Enrolling...' : 'Enroll Now'}
-                  </Button>
+                  {isEnrolled ? (
+                    <div className="space-y-3 pt-2">
+                      <Button 
+                        className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary" 
+                        onClick={() => navigate('/dashboard')}
+                      >
+                        <Check className="mr-2 h-4 w-4" />
+                        Go to Course
+                      </Button>
+                      
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" className="w-full">
+                            Unenroll
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will unenroll you from "{title}". You can always enroll again later.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={handleUnenroll}
+                              disabled={unenrolling}
+                            >
+                              {unenrolling ? 'Unenrolling...' : 'Unenroll'}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  ) : (
+                    <Button 
+                      className="w-full mt-4 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary" 
+                      onClick={handleEnroll}
+                      disabled={enrolling}
+                    >
+                      {enrolling ? 'Enrolling...' : 'Enroll Now'}
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             </div>
