@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { CourseCard } from '@/components/ui/skill-card';
+import { CourseCard } from '@/components/courses/CourseCard';
 import { useNavigate } from 'react-router-dom';
 import {
   DropdownMenu,
@@ -105,10 +105,6 @@ const Courses = () => {
     return matchesCategory && matchesLevel && matchesSearch;
   });
   
-  const handleCourseClick = (courseId: string) => {
-    navigate(`/courses/${courseId}`);
-  };
-  
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-secondary/20">
       <Header />
@@ -184,18 +180,17 @@ const Courses = () => {
           
           {filteredCourses.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-up animation-delay-300">
-              {filteredCourses.map((course, index) => (
+              {filteredCourses.map((course) => (
                 <CourseCard
                   key={course.id}
+                  id={course.id}
                   title={course.title}
                   description={course.description}
                   image={course.image}
                   category={course.category}
                   duration={course.duration}
                   level={course.level}
-                  className="animate-scale-up hover:shadow-md transition-shadow"
-                  style={{ animationDelay: `${index * 50}ms` }}
-                  onClick={() => handleCourseClick(course.id)}
+                  instructor={course.instructor}
                 />
               ))}
             </div>

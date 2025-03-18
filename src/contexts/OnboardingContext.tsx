@@ -1,6 +1,6 @@
 
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { ProfileSetup } from '@/components/onboarding/ProfileSetup';
+import { OnboardingDialog } from '@/components/onboarding/OnboardingDialog';
 import { useAuth } from '@/contexts/AuthContext';
 
 type OnboardingContextType = {
@@ -33,7 +33,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   return (
     <OnboardingContext.Provider value={{ isOnboarded, completeOnboarding }}>
       {children}
-      {showSetup && <ProfileSetup onComplete={completeOnboarding} />}
+      {showSetup && <OnboardingDialog open={showSetup} onComplete={completeOnboarding} />}
     </OnboardingContext.Provider>
   );
 };
