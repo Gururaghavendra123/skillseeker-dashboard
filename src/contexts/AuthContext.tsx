@@ -4,26 +4,15 @@ import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-// Define a more comprehensive profile type
-interface Profile {
-  id: string;
-  username: string | null;
-  avatar_url: string | null;
-  bio?: string | null;
-  interests?: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
 type AuthContextType = {
   session: Session | null;
   user: User | null;
-  profile: Profile | null;
+  profile: any | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, username: string) => Promise<void>;
   signOut: () => Promise<void>;
-  updateProfile: (updates: Partial<Profile>) => Promise<void>;
+  updateProfile: (updates: any) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,7 +20,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -152,24 +141,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const updateProfile = async (updates: Partial<Profile>) => {
+  const updateProfile = async (updates: any) => {
     try {
       if (!user) throw new Error('User not authenticated');
       
-      const updatedData = {
-        ...updates,
-        updated_at: new Date().toISOString(),
-      };
-      
       const { error } = await supabase
         .from('profiles')
-        .update(updatedData)
+        .update(updates)
         .eq('id', user.id);
         
       if (error) throw error;
       
-      // Update the local profile state with the updates
-      setProfile(prev => prev ? { ...prev, ...updatedData } : null);
+      setProfile({ ...profile, ...updates });
       
       toast({
         title: 'Profile updated',
@@ -181,7 +164,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: error.message,
         variant: 'destructive',
       });
-      throw error;
     }
   };
 

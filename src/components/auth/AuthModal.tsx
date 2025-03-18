@@ -24,9 +24,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ trigger, defaultView = 'signin' }
         {trigger || <Button variant="ghost">Sign In</Button>}
       </DialogTrigger>
       
-      <DialogContent className="w-full max-w-md gradient-card">
+      <DialogContent className="w-full max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-center text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+          <DialogTitle className="text-center text-2xl font-bold">
             {view === 'signin' ? 'Welcome Back' : 'Create Your Account'}
           </DialogTitle>
         </DialogHeader>

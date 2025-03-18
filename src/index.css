@@ -110,35 +110,8 @@
 }
 
 @layer components {
-  /* Glass card with gradient */
   .glass-card {
     @apply bg-white/80 backdrop-blur-sm shadow-sm border border-white/20 rounded-lg;
-  }
-  
-  /* Enhanced gradient cards */
-  .gradient-card {
-    @apply relative overflow-hidden;
-    background: linear-gradient(120deg, rgba(255,255,255,0.7) 0%, rgba(240,240,250,0.9) 100%);
-  }
-
-  .gradient-card:after {
-    content: '';
-    @apply absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-60 pointer-events-none rounded-lg;
-  }
-  
-  /* Primary button with gradient hover effect */
-  .btn-gradient {
-    @apply relative overflow-hidden transition-all;
-    background: linear-gradient(90deg, hsl(222, 90%, 65%) 0%, hsl(250, 80%, 65%) 100%);
-  }
-  
-  .btn-gradient:hover {
-    background: linear-gradient(90deg, hsl(222, 90%, 60%) 0%, hsl(250, 80%, 60%) 100%);
-  }
-  
-  /* Hero section gradient */
-  .hero-gradient {
-    background: linear-gradient(135deg, rgba(226, 232, 240, 0.6) 0%, rgba(203, 213, 225, 0.6) 100%);
   }
   
   .skill-progress-circle circle {
@@ -167,46 +140,8 @@
     @apply opacity-0 transition-opacity duration-300;
   }
 
-  /* Animation utilities */
-  .animate-fade-up {
-    animation: fadeUp 0.5s ease forwards;
-  }
-  
-  .animate-scale-up {
-    animation: scaleUp 0.5s ease forwards;
-  }
-  
-  @keyframes fadeUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  @keyframes scaleUp {
-    from {
-      opacity: 0;
-      transform: scale(0.95);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-  
-  .animation-delay-100 {
-    animation-delay: 100ms;
-  }
-  
-  .animation-delay-200 {
-    animation-delay: 200ms;
-  }
-  
-  .animation-delay-300 {
-    animation-delay: 300ms;
+  /* Hero section gradient */
+  .hero-gradient {
+    @apply bg-gradient-to-b from-secondary to-background;
   }
 }

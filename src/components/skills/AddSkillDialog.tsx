@@ -1,228 +1,174 @@
 
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import React from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/components/ui/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Loader2 } from 'lucide-react';
+import { useForm, Controller } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
-const categories = [
-  'Programming',
-  'Design',
-  'Backend',
-  'Frontend',
-  'Database',
-  'DevOps',
-  'Computer Science',
-  'Professional',
-  'Other'
-];
+const formSchema = z.object({
+  title: z.string().min(2, { message: 'Skill name must be at least 2 characters' }),
+  description: z.string().min(10, { message: 'Description must be at least 10 characters' }),
+  category: z.string().min(1, { message: 'Please select a category' }),
+  progress: z.number().min(0).max(100),
+});
+
+type FormValues = z.infer<typeof formSchema>;
 
 interface AddSkillDialogProps {
-  onSkillAdded: () => void;
-  trigger?: React.ReactNode;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onAddSkill: (skill: FormValues) => void;
+  categories: string[];
 }
 
-export function AddSkillDialog({ onSkillAdded, trigger }: AddSkillDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    category: 'Programming',
-    progress: 0
+export const AddSkillDialog: React.FC<AddSkillDialogProps> = ({
+  open,
+  onOpenChange,
+  onAddSkill,
+  categories,
+}) => {
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: '',
+      description: '',
+      category: '',
+      progress: 0,
+    },
   });
   
-  const { user } = useAuth();
-  const { toast } = useToast();
-  
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const { formState } = form;
+  const isSubmitting = formState.isSubmitting;
+
+  const onSubmit = async (data: FormValues) => {
+    onAddSkill(data);
+    form.reset();
+    onOpenChange(false);
   };
-  
-  const handleCategoryChange = (value: string) => {
-    setFormData(prev => ({ ...prev, category: value }));
-  };
-  
-  const handleProgressChange = (value: number[]) => {
-    setFormData(prev => ({ ...prev, progress: value[0] }));
-  };
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!user) {
-      toast({
-        title: 'Authentication required',
-        description: 'You must be logged in to add skills',
-        variant: 'destructive'
-      });
-      return;
-    }
-    
-    if (!formData.title.trim()) {
-      toast({
-        title: 'Skill name required',
-        description: 'Please enter a name for your skill',
-        variant: 'destructive'
-      });
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
-    try {
-      const { error } = await supabase
-        .from('skills')
-        .insert({
-          user_id: user.id,
-          title: formData.title,
-          description: formData.description,
-          category: formData.category,
-          progress: formData.progress
-        });
-      
-      if (error) throw error;
-      
-      toast({
-        title: 'Skill added successfully',
-        description: `${formData.title} has been added to your skills`
-      });
-      
-      // Reset form and close dialog
-      setFormData({
-        title: '',
-        description: '',
-        category: 'Programming',
-        progress: 0
-      });
-      
-      setIsOpen(false);
-      onSkillAdded();
-    } catch (error: any) {
-      console.error('Error adding skill:', error);
-      toast({
-        title: 'Error adding skill',
-        description: error.message,
-        variant: 'destructive'
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-  
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Skill
-          </Button>
-        )}
-      </DialogTrigger>
-      
-      <DialogContent className="sm:max-w-[500px] gradient-card">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-center">Add New Skill</DialogTitle>
+          <DialogTitle>Add New Skill</DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Skill Name<span className="text-red-500">*</span></Label>
-            <Input
-              id="title"
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
               name="title"
-              value={formData.title}
-              onChange={handleChange}
-              placeholder="e.g., JavaScript, UI Design, Public Speaking"
-              required
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
-            <Select 
-              value={formData.category} 
-              onValueChange={handleCategoryChange}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map(category => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              placeholder="Describe your skill and what you're learning"
-              rows={3}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <Label htmlFor="progress">Progress</Label>
-              <span className="text-sm">{formData.progress}%</span>
-            </div>
-            <Slider 
-              value={[formData.progress]} 
-              onValueChange={handleProgressChange}
-              min={0}
-              max={100}
-              step={1}
-              className="mt-2"
-            />
-            <div className="flex justify-between text-xs text-muted-foreground mt-1">
-              <span>Beginner</span>
-              <span>Intermediate</span>
-              <span>Advanced</span>
-            </div>
-          </div>
-          
-          <div className="pt-4 flex justify-end gap-2">
-            <Button 
-              type="button" 
-              variant="outline"
-              onClick={() => setIsOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Adding...
-                </>
-              ) : (
-                'Add Skill'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Skill Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. JavaScript, UI Design, etc." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-            </Button>
-          </div>
-        </form>
+            />
+            
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Briefly describe this skill and what you're learning"
+                      className="resize-none"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="progress"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Current Progress ({field.value}%)</FormLabel>
+                  <FormControl>
+                    <Controller
+                      control={form.control}
+                      name="progress"
+                      render={({ field: { value, onChange } }) => (
+                        <Slider
+                          value={[value]}
+                          min={0}
+                          max={100}
+                          step={1}
+                          onValueChange={(vals) => onChange(vals[0])}
+                          className="py-4"
+                        />
+                      )}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <DialogFooter className="pt-4">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Adding...' : 'Add Skill'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
-}
+};
