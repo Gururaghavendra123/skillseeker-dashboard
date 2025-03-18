@@ -1,8 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { CourseCard } from '@/components/ui/skill-card';
 import { useNavigate } from 'react-router-dom';
 import {
   DropdownMenu,
@@ -13,10 +12,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Search } from 'lucide-react';
+import { ChevronDown, Search, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { CourseCard } from '@/components/courses/CourseCard';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useOnboarding } from '@/contexts/OnboardingContext';
 
-// Mock data
+// Mock data for the time being
 const coursesData = [
   {
     id: '1',
@@ -93,7 +96,45 @@ const Courses = () => {
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   const [selectedLevel, setSelectedLevel] = useState('All Levels');
   const [searchQuery, setSearchQuery] = useState('');
+  const [enrollments, setEnrollments] = useState<string[]>([]);
+  const [isLoadingEnrollments, setIsLoadingEnrollments] = useState(false);
+  
   const navigate = useNavigate();
+  const { user, isLoading } = useAuth();
+  const { shouldShowOnboarding, completedOnboarding } = useOnboarding();
+  
+  useEffect(() => {
+    if (!isLoading && !user) {
+      navigate('/');
+    } else if (!isLoading && user && shouldShowOnboarding && !completedOnboarding) {
+      navigate('/dashboard');
+    }
+  }, [user, isLoading, navigate, shouldShowOnboarding, completedOnboarding]);
+
+  useEffect(() => {
+    const fetchEnrollments = async () => {
+      if (!user) return;
+      
+      setIsLoadingEnrollments(true);
+      try {
+        const { data, error } = await supabase
+          .from('enrollments')
+          .select('course_id')
+          .eq('user_id', user.id);
+        
+        if (error) throw error;
+        
+        const enrolledCourseIds = data.map(enrollment => enrollment.course_id);
+        setEnrollments(enrolledCourseIds);
+      } catch (error) {
+        console.error('Error fetching enrollments:', error);
+      } finally {
+        setIsLoadingEnrollments(false);
+      }
+    };
+    
+    fetchEnrollments();
+  }, [user]);
   
   // Filter courses based on selected filters and search query
   const filteredCourses = coursesData.filter((course) => {
@@ -105,18 +146,26 @@ const Courses = () => {
     return matchesCategory && matchesLevel && matchesSearch;
   });
   
-  const handleCourseClick = (courseId: string) => {
-    navigate(`/courses/${courseId}`);
-  };
+  if (isLoading || isLoadingEnrollments) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin h-8 w-8 text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
   
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
       
-      <main className="flex-1 pt-28 pb-20">
+      <main className="flex-1 pt-28 pb-20 bg-gradient-to-b from-blue-50/30 to-white">
         <div className="container mx-auto px-4">
           <div className="mb-10">
-            <h1 className="text-3xl font-bold mb-2 animate-fade-up">Browse Courses</h1>
+            <h1 className="text-3xl font-bold mb-2 animate-fade-up bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Browse Courses</h1>
             <p className="text-muted-foreground animate-fade-up animation-delay-100">Discover courses to enhance your skills and advance your career</p>
           </div>
           
@@ -187,6 +236,7 @@ const Courses = () => {
               {filteredCourses.map((course, index) => (
                 <CourseCard
                   key={course.id}
+                  id={course.id}
                   title={course.title}
                   description={course.description}
                   image={course.image}
@@ -194,8 +244,9 @@ const Courses = () => {
                   duration={course.duration}
                   level={course.level}
                   className="animate-scale-up"
+                  isEnrolled={enrollments.includes(course.id)}
+                  // @ts-ignore
                   style={{ animationDelay: `${index * 50}ms` }}
-                  onClick={() => handleCourseClick(course.id)}
                 />
               ))}
             </div>
