@@ -60,9 +60,8 @@ export const AddSkillDialog: React.FC<AddSkillDialogProps> = ({
   const isSubmitting = formState.isSubmitting;
 
   const onSubmit = async (data: FormValues) => {
-    onAddSkill(data);
+    await onAddSkill(data);
     form.reset();
-    onOpenChange(false);
   };
 
   return (

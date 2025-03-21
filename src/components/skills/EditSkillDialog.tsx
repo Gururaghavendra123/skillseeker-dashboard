@@ -79,6 +79,7 @@ export const EditSkillDialog: React.FC<EditSkillDialogProps> = ({
 
   const onSubmit = async (data: FormValues) => {
     onEditSkill(data);
+    onOpenChange(false);
   };
 
   const handleDelete = () => {

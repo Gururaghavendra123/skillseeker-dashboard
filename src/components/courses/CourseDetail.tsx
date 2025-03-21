@@ -1,17 +1,14 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EnrollButton } from './EnrollButton';
 import { ArrowLeft, Clock, BookOpen, Award, Calendar } from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
 
-// Mock data for the time being
+// Mock data for courses
 const coursesData = [
   {
     id: '1',
@@ -21,7 +18,7 @@ const coursesData = [
     image: 'https://images.unsplash.com/photo-1633356122102-3fe601e05bd2?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80',
     category: 'Web Development',
     duration: '6 hours',
-    level: 'Advanced' as const,
+    level: 'Advanced',
     instructor: 'Sarah Johnson',
     lessons: 12,
     createdAt: '2023-08-15',
@@ -34,7 +31,7 @@ const coursesData = [
     image: 'https://images.unsplash.com/photo-1587620962725-abab7fe55159?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80',
     category: 'Programming',
     duration: '4 hours',
-    level: 'Beginner' as const,
+    level: 'Beginner',
     instructor: 'Michael Chen',
     lessons: 8,
     createdAt: '2023-09-05',
@@ -47,7 +44,7 @@ const coursesData = [
     image: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80',
     category: 'Design',
     duration: '8 hours',
-    level: 'Intermediate' as const,
+    level: 'Intermediate',
     instructor: 'Emily Rodriguez',
     lessons: 15,
     createdAt: '2023-07-22',
@@ -60,7 +57,7 @@ const coursesData = [
     image: 'https://images.unsplash.com/photo-1627399270231-7d36245355a9?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80',
     category: 'Web Development',
     duration: '10 hours',
-    level: 'Intermediate' as const,
+    level: 'Intermediate',
     instructor: 'David Kim',
     lessons: 20,
     createdAt: '2023-10-10',
@@ -73,7 +70,7 @@ const coursesData = [
     image: 'https://images.unsplash.com/photo-1517180102446-f3ece451e9d8?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80',
     category: 'Web Development',
     duration: '5 hours',
-    level: 'Beginner' as const,
+    level: 'Beginner',
     instructor: 'Jessica Patel',
     lessons: 10,
     createdAt: '2023-11-15',
@@ -86,7 +83,7 @@ const coursesData = [
     image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80',
     category: 'Data Science',
     duration: '7 hours',
-    level: 'Advanced' as const,
+    level: 'Advanced',
     instructor: 'Alex Thompson',
     lessons: 14,
     createdAt: '2023-12-01',
@@ -99,47 +96,51 @@ export function CourseDetail() {
   const [loading, setLoading] = useState(true);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const navigate = useNavigate();
-  const { user } = useAuth();
 
   useEffect(() => {
     const fetchCourse = async () => {
       setLoading(true);
       
-      // For now, use the mock data
-      const foundCourse = coursesData.find(c => c.id === courseId);
-      
-      if (foundCourse) {
-        setCourse(foundCourse);
+      try {
+        // Ensure the course ID exists in our mock data
+        const foundCourse = coursesData.find(c => c.id === courseId);
         
-        // Check if user is enrolled
-        if (user) {
-          try {
-            const { data, error } = await supabase
-              .from('enrollments')
-              .select('*')
-              .eq('user_id', user.id)
-              .eq('course_id', courseId)
-              .single();
-            
-            if (error && error.code !== 'PGRST116') {
-              console.error('Error checking enrollment:', error);
-            }
-            
-            setIsEnrolled(!!data);
-          } catch (error) {
-            console.error('Error checking enrollment:', error);
-          }
+        if (foundCourse) {
+          setCourse(foundCourse);
+          setIsEnrolled(localStorage.getItem(`enrolled_${courseId}`) === 'true');
         }
+      } catch (error) {
+        console.error('Error fetching course:', error);
+        toast({
+          title: "Error loading course",
+          description: "Could not load course details",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
     };
     
     fetchCourse();
-  }, [courseId, user]);
+  }, [courseId]);
 
-  const handleEnrollmentChange = () => {
-    setIsEnrolled(!isEnrolled);
+  const handleEnrollmentChange = (newState: boolean) => {
+    setIsEnrolled(newState);
+    
+    // Store enrollment state in local storage for demo purposes
+    if (newState) {
+      localStorage.setItem(`enrolled_${courseId}`, 'true');
+      toast({
+        title: "Enrolled Successfully",
+        description: `You have enrolled in ${course?.title}`,
+      });
+    } else {
+      localStorage.removeItem(`enrolled_${courseId}`);
+      toast({
+        title: "Unenrolled",
+        description: `You have unenrolled from ${course?.title}`,
+      });
+    }
   };
 
   if (loading) {
@@ -208,29 +209,9 @@ export function CourseDetail() {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="bg-gradient-to-br from-card to-card/90">
-            <CardContent className="p-4 flex flex-col items-center justify-center">
-              <Clock className="h-10 w-10 mb-2 text-primary" />
-              <h3 className="font-medium">Duration</h3>
-              <p>{course.duration}</p>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-gradient-to-br from-card to-card/90">
-            <CardContent className="p-4 flex flex-col items-center justify-center">
-              <BookOpen className="h-10 w-10 mb-2 text-primary" />
-              <h3 className="font-medium">Lessons</h3>
-              <p>{course.lessons} lessons</p>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-gradient-to-br from-card to-card/90">
-            <CardContent className="p-4 flex flex-col items-center justify-center">
-              <Award className="h-10 w-10 mb-2 text-primary" />
-              <h3 className="font-medium">Certificate</h3>
-              <p>Upon completion</p>
-            </CardContent>
-          </Card>
+          <CourseInfoCard icon={<Clock className="h-10 w-10 mb-2 text-primary" />} title="Duration" value={course.duration} />
+          <CourseInfoCard icon={<BookOpen className="h-10 w-10 mb-2 text-primary" />} title="Lessons" value={`${course.lessons} lessons`} />
+          <CourseInfoCard icon={<Award className="h-10 w-10 mb-2 text-primary" />} title="Certificate" value="Upon completion" />
         </div>
         
         <Card className="bg-gradient-to-br from-card to-card/90 mb-8">
@@ -271,5 +252,18 @@ export function CourseDetail() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Extract this into a separate component to reduce file size
+function CourseInfoCard({ icon, title, value }: { icon: React.ReactNode, title: string, value: string }) {
+  return (
+    <Card className="bg-gradient-to-br from-card to-card/90">
+      <CardContent className="p-4 flex flex-col items-center justify-center">
+        {icon}
+        <h3 className="font-medium">{title}</h3>
+        <p>{value}</p>
+      </CardContent>
+    </Card>
   );
 }
