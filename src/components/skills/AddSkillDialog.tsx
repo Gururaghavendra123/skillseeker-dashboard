@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -70,6 +70,9 @@ export const AddSkillDialog: React.FC<AddSkillDialogProps> = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Add New Skill</DialogTitle>
+          <DialogDescription>
+            Enter details about a skill you want to track
+          </DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
@@ -106,6 +109,9 @@ export const AddSkillDialog: React.FC<AddSkillDialogProps> = ({
                           {category}
                         </SelectItem>
                       ))}
+                      {categories.length === 0 && (
+                        <SelectItem value="Other">Other</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />

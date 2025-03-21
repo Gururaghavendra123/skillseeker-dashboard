@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -91,6 +91,9 @@ export const EditSkillDialog: React.FC<EditSkillDialogProps> = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Edit Skill</DialogTitle>
+          <DialogDescription>
+            Update your skill details and progress
+          </DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
@@ -127,6 +130,9 @@ export const EditSkillDialog: React.FC<EditSkillDialogProps> = ({
                           {category}
                         </SelectItem>
                       ))}
+                      {categories.length === 0 && (
+                        <SelectItem value="Other">Other</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />

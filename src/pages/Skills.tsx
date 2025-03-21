@@ -49,7 +49,7 @@ export default function Skills() {
       );
       
       setSkills(data as SkillRow[]);
-      setCategories(uniqueCategories);
+      setCategories(uniqueCategories.length > 0 ? uniqueCategories : ['Programming', 'Design', 'Marketing', 'Other']);
     } catch (error) {
       console.error('Error fetching skills:', error);
     } finally {
@@ -92,6 +92,7 @@ export default function Skills() {
       });
       
       fetchSkills();
+      setAddDialogOpen(false);
     } catch (error) {
       console.error('Error adding skill:', error);
     }
