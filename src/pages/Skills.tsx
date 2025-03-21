@@ -10,7 +10,7 @@ import { PlusIcon, PencilIcon, TrashIcon } from 'lucide-react';
 import { AddSkillDialog } from '@/components/skills/AddSkillDialog';
 import { EditSkillDialog } from '@/components/skills/EditSkillDialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Skills() {
@@ -97,7 +97,7 @@ export default function Skills() {
     }
   };
 
-  const handleEditSkill = async (skillId: string, formData: Partial<SkillRow>) => {
+  const handleEditSkill = async (formData: any) => {
     try {
       const { error } = await supabase
         .from('skills')
@@ -108,7 +108,7 @@ export default function Skills() {
           category: formData.category,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', skillId);
+        .eq('id', formData.id);
       
       if (error) {
         console.error('Error updating skill:', error);
@@ -126,6 +126,7 @@ export default function Skills() {
       });
       
       fetchSkills();
+      setEditDialogOpen(false);
     } catch (error) {
       console.error('Error updating skill:', error);
     }
@@ -265,16 +266,17 @@ export default function Skills() {
         open={addDialogOpen}
         onOpenChange={setAddDialogOpen}
         onAddSkill={handleAddSkill}
-        existingCategories={categories}
+        categories={categories}
       />
       
       {currentSkill && (
         <EditSkillDialog
           open={editDialogOpen}
           onOpenChange={setEditDialogOpen}
-          onUpdateSkill={(formData) => handleEditSkill(currentSkill.id, formData)}
+          onEditSkill={handleEditSkill}
+          onDeleteSkill={handleDeleteSkill}
           skill={currentSkill}
-          existingCategories={categories}
+          categories={categories}
         />
       )}
     </div>
